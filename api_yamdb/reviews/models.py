@@ -130,3 +130,24 @@ class Title(models.Model):
 
     def __str__(self) -> str:
         return self.name
+
+
+class Review(models.Model):
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+    )
+    title = models.ForeignKey(
+        Title,
+        on_delete=models.CASCADE
+    )
+    text = models.TextField()
+    created = models.DateTimeField(
+        'Дата добавления отзыва',
+        auto_now_add=True,
+        db_index=True,
+    )
+
+    class Meta:
+        ordering = ['created']
+        default_related_name = 'reviews'

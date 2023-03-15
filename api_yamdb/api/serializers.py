@@ -6,7 +6,7 @@ from rest_framework.validators import UniqueTogetherValidator
 import datetime
 
 
-from reviews.models import User, Genre, Category, Title
+from reviews.models import User, Genre, Category, Title, Review
 
 PATTERN_USERS = re.compile(r'[\\w.@+-]+\\z')
 ERROR_MESSAGE_TITLE = 'год выпуска книги не может быть больше текущего'
@@ -106,3 +106,15 @@ class SignupSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('email', 'username')
+
+
+class ReviewSerializer(serializers.ModelSerializer):
+    author = serializers.SlugRelatedField(
+        many=False,
+        slug_field='username',
+    )
+
+    class Meta:
+        model = Review
+        fields = '__all__'
+        read_only_fields = ('author', 'title', 'created')
