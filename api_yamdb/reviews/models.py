@@ -1,5 +1,6 @@
-from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+
+import datetime
 
 
 class Category(models.Model):
@@ -32,16 +33,12 @@ class Title(models.Model):
     name = models.CharField(max_length=100,
                             verbose_name='наименование произведения',
                             help_text='введите название, произведения')
-    year = models.IntegerField(validators=(MinValueValidator(0),
-                                           MaxValueValidator(3000)),
-                               verbose_name='год выпуска',
-                               help_text='введите год выпуска')
+    year = models.PositiveSmallIntegerField(verbose_name='год выпуска',
+                                            help_text='введите год выпуска')
     description = models.TextField('описание произведения',
                                    help_text='добавьте описание')
     genre = models.ManyToManyField(Genre,
                                    blank=True,
-                                   null=True,
-                                   on_delete=models.SET_NULL,
                                    db_index=True,
                                    verbose_name='жанр',
                                    help_text='добавьте жанр')
@@ -60,6 +57,12 @@ class Title(models.Model):
         default_related_name = 'titles'
         verbose_name = 'Произведение'
         verbose_name_plural = 'Произведения'
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(release_year__lte=datetime.datetime.now().year),
+                name='проверка на год выпуска'
+            )
+        ]
 
     def __str__(self) -> str:
         return self.name
