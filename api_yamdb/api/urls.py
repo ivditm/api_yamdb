@@ -3,7 +3,7 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-from .views import UserViewSet, ReviewViewSet
+from .views import UserViewSet, ReviewViewSet, CommentViewSet
 
 router_v1 = DefaultRouter()
 
@@ -12,6 +12,11 @@ router_v1.register(
     r'titles/(?P<title_id>[\d]+)/reviews',
     ReviewViewSet,
     basename='reviews'
+)
+router_v1.register(
+    r'titles/(?P<title_id>[\d]+)/reviews/(?P<review_id>[\d]+)/comments',
+    CommentViewSet,
+    basename='comments'
 )
 
 urlpatterns = [

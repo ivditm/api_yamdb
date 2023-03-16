@@ -4,7 +4,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
-from reviews.models import User, Category, Genre, Title
+from reviews.models import User, Category, Genre, Title, Review
 
 from .permissions import IsAdminPermission, IsAuthorOrReadOnlyPermission
 from .serializers import (CategorySerializer,
@@ -12,7 +12,8 @@ from .serializers import (CategorySerializer,
                           TitleSerializer,
                           UserForAdminSerializer,
                           UserForUserSerializer,
-                          ReviewSerializer)
+                          ReviewSerializer,
+                          CommentSerializer)
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -60,4 +61,25 @@ class ReviewViewSet(viewsets.ModelViewSet):
         serializer.save(
             author=self.request.user,
             title=self.__title_if_exist
+        )
+
+
+class CommentViewSet(viewsets.ModelViewSet):
+    serializer_class = CommentSerializer
+    permission_classes = (IsAuthorOrReadOnlyPermission,)
+
+    @property
+    def __review_if_exist(self):
+        return get_object_or_404(
+            Review,
+            id=self.kwargs.get("review_id")
+        )
+
+    def get_queryset(self):
+        return self.__review_if_exist.comments.all()
+
+    def perform_create(self, serializer):
+        serializer.save(
+            author=self.request.user,
+            review=self.__review_if_exist
         )
