@@ -1,6 +1,70 @@
+from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 import datetime
+
+
+ROLE_CHOICES = [
+    ('user', 'user'),
+    ('moderator', 'moderator'),
+    ('admin', 'admin'),
+]
+
+
+class User(AbstractUser):
+    username = models.CharField(
+        max_length=150,
+        unique=True,
+        help_text='Введите имя пользователя'
+    )
+    email = models.EmailField(
+        max_length=254,
+        unique=True,
+        help_text='Введите email'
+    )
+    first_name = models.CharField(
+        max_length=150,
+        help_text='Имя',
+        blank=True
+    )
+    last_name = models.CharField(
+        max_length=150,
+        help_text='Фамилия',
+        blank=True
+    )
+    bio = models.TextField(
+        help_text='Биография',
+        blank=True
+    )
+    role = models.CharField(
+        max_length=20,
+        choices=ROLE_CHOICES,
+        default='user'
+    )
+    confirmation_code = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True
+    )
+    password = models.CharField(
+        max_length=20,
+        blank=True,
+        null=True
+    )
+
+    class Meta:
+        ordering = ('id',)
+        verbose_name = 'Пользователь'
+        verbose_name_plural = 'Пользователи'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['username', 'email'],
+                name='unique_fields'
+            )
+        ]
+
+    def __str__(self):
+        return self.username
 
 
 class Category(models.Model):
@@ -59,7 +123,7 @@ class Title(models.Model):
         verbose_name_plural = 'Произведения'
         constraints = [
             models.CheckConstraint(
-                check=models.Q(release_year__lte=datetime.datetime.now().year),
+                check=models.Q(year__lte=datetime.datetime.now().year),
                 name='проверка на год выпуска'
             )
         ]

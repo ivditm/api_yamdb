@@ -1,15 +1,18 @@
 from django.db.models import Avg
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters
-from rest_framework import mixins
-from rest_framework import viewsets
+from rest_framework import filters, mixins, status, viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from django.shortcuts import get_object_or_404
 
 
-from permissions import IsAdminPermission
-from reviews.models import Category, Genre, Title
-from .serializers import (CategorySerializer, GenreSerializer,
-                          GETTitleSerializer, TitleSerializer)
 from .filters import TitleFilter
+from permissions import IsAdminPermission
+from reviews.models import Category, Genre, Title, User
+from .serializers import (CategorySerializer, GenreSerializer,
+                          GETTitleSerializer, TitleSerializer,
+                          UserForAdminSerializer, UserForUserSerializer)
 
 
 class CreateDestroyListViewSet(mixins.CreateModelMixin,
@@ -53,3 +56,30 @@ class TitleViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = super().get_queryset()
         return self.annotate_queryset(queryset)
+
+
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserForAdminSerializer
+    http_method_names = ('get', 'post', 'patch', 'delete')
+    lookup_field = ('username')
+    permission_classes = (IsAdminPermission,)
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('username',)
+
+    @action(
+        methods=('get', 'patch'),
+        detail=False,
+        url_path='me',
+        permission_classes=(IsAuthenticated,)
+    )
+    def users_profile(self, request, pk=None):
+        user = get_object_or_404(User, pk=request.user.id)
+        serializer = UserForUserSerializer(
+            user,
+            data=request.data,
+            partial=True
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)

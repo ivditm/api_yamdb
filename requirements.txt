@@ -7,11 +7,7 @@ colorama==0.4.6
 Django==3.2
 django-filter==2.4.0
 djangorestframework==3.12.4
-idna==3.4
-iniconfig==2.0.0
-packaging==23.0
-pluggy==0.13.1
-py==1.11.0
+djangorestframework-simplejwt==4.7.2
 PyJWT==2.1.0
 pytest==6.2.4
 pytest-django==4.4.0
