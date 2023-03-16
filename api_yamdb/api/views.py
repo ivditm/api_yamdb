@@ -50,7 +50,6 @@ class ReviewViewSet(viewsets.ModelViewSet):
     def __title_if_exist(self):
         return get_object_or_404(
             Title,
-            # Скорректировать при определении эндпоинта
             id=self.kwargs.get("title_id")
         )
 

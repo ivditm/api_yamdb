@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.core.validators import MaxValueValidator, MinValueValidator
 
 import datetime
 
@@ -142,12 +143,19 @@ class Review(models.Model):
         on_delete=models.CASCADE
     )
     text = models.TextField()
-    created = models.DateTimeField(
+    pub_date = models.DateTimeField(
         'Дата добавления отзыва',
         auto_now_add=True,
         db_index=True,
     )
+    score = models.IntegerField(
+        default=1,
+        validators=[
+            MaxValueValidator(10),
+            MinValueValidator(1)
+        ]
+    )
 
     class Meta:
-        ordering = ['created']
+        ordering = ['pub_date']
         default_related_name = 'reviews'
