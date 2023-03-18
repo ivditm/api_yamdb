@@ -4,15 +4,15 @@ from reviews.models import Title
 
 
 class TitleFilter(django_filters.FilterSet):
-    genre = django_filters.CharFilter(field_name='genre__slug',
-                                      lookup_expr='icontains')
-    category = django_filters.CharFilter(field_name='category__slug',
-                                         lookup_expr='icontains')
+    genre = django_filters.CharFilter(field_name='genre__slug')
+    category = django_filters.CharFilter(field_name='category__slug')
     name = django_filters.CharFilter(field_name='name',
-                                     lookup_expr='contains')
-    year = django_filters.CharFilter(field_name='year',
-                                     lookup_expr='exact')
+                                     lookup_expr='icontains')
+    year = django_filters.NumberFilter(field_name='year')
+
+    # def filter_genre(self, queryset, name, value):
+    #     return queryset.filter(genre__slug=value)
 
     class Meta:
         model = Title
-        fields = ('category', 'genre', 'name', 'year')
+        fields = ('genre', 'category', 'name', 'year')

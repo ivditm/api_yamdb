@@ -8,11 +8,13 @@ from django.shortcuts import get_object_or_404
 
 
 from .filters import TitleFilter
-from permissions import IsAdminPermission
+from .permissions import (IsAdminPermission, IsAdminOrReadOnly,
+                          IsAuthorOrReadOnlyPermission)
 from reviews.models import Category, Genre, Title, User
 from .serializers import (CategorySerializer, GenreSerializer,
-                          GETTitleSerializer, TitleSerializer,
-                          UserForAdminSerializer, UserForUserSerializer)
+                          TitleSerializer,
+                          UserForAdminSerializer, UserForUserSerializer,
+                          ReviewSerializer)
 
 
 class CreateDestroyListViewSet(mixins.CreateModelMixin,
@@ -26,7 +28,8 @@ class CreateDestroyListViewSet(mixins.CreateModelMixin,
 class GenreViewSet(CreateDestroyListViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
-    permission_classes = (IsAdminPermission,)
+    lookup_field = 'slug'
+    permission_classes = (IsAdminOrReadOnly,)
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     search_fields = ('name',)
 
@@ -34,28 +37,19 @@ class GenreViewSet(CreateDestroyListViewSet):
 class CategoryViewSet(CreateDestroyListViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = (IsAdminPermission,)
+    lookup_field = 'slug'
+    permission_classes = (IsAdminOrReadOnly,)
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     search_fields = ('name',)
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.all()
+    queryset = Title.objects.all().annotate(Avg('reviews__score'))
+
+    permission_classes = [IsAdminOrReadOnly]
     serializer_class = TitleSerializer
-    permission_classes = (IsAdminPermission,)
-    filter_backends = (TitleFilter,)
-
-    def get_serializer_class(self):
-        if self.request.method == 'GET':
-            return GETTitleSerializer
-        return TitleSerializer
-
-    def annotate_queryset(self, queryset):
-        return queryset.annotate(avg_rating=Avg('rating'))
-
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        return self.annotate_queryset(queryset)
+    filterset_class = TitleFilter
+    # filterset_fields = ('genre', 'category', 'name', 'year')
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -83,3 +77,24 @@ class UserViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class ReviewViewSet(viewsets.ModelViewSet):
+    serializer_class = ReviewSerializer
+    permission_classes = (IsAuthorOrReadOnlyPermission,)
+
+    @property
+    def __title_if_exist(self):
+        return get_object_or_404(
+            Title,
+            id=self.kwargs.get("title_id")
+        )
+
+    def get_queryset(self):
+        return self.__title_if_exist.reviews.all()
+
+    def perform_create(self, serializer):
+        serializer.save(
+            author=self.request.user,
+            title=self.__title_if_exist
+        )
