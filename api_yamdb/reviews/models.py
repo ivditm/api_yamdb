@@ -134,6 +134,22 @@ class Title(models.Model):
         return self.name
 
 
+class GenreTitle(models.Model):
+    genre = models.ForeignKey(Genre,
+                              on_delete=models.CASCADE,
+                              verbose_name='жанр')
+    title = models.ForeignKey(Title,
+                              on_delete=models.CASCADE,
+                              verbose_name='произведение')
+
+    class Meta:
+        verbose_name = 'связь жанра и произведения'
+        verbose_name_plural = 'соответствие жанров и произведений'
+
+    def __str__(self) -> str:
+        return f'{self.title} является {self.genre}'
+
+
 class Review(models.Model):
     title = models.ForeignKey(
         Title,
@@ -163,3 +179,24 @@ class Review(models.Model):
 
     def __str__(self):
         return self.text[:15]
+
+
+class Comment(models.Model):
+    review = models.ForeignKey(
+        Review,
+        on_delete=models.CASCADE
+    )
+    text = models.TextField()
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+    )
+    pub_date = models.DateTimeField(
+        'Дата добавления комментария',
+        auto_now_add=True,
+        db_index=True,
+    )
+
+    class Meta:
+        ordering = ['pub_date']
+        default_related_name = 'comments'
