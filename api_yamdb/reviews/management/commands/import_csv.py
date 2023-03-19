@@ -4,9 +4,8 @@ from django.shortcuts import get_object_or_404
 
 import os
 import csv
-from reviews.models import (Category, Comment,
-                            Genre, GenreTitle,
-                            Review, Title, User)
+from reviews.models import (Category, Comment, Genre,
+                            GenreTitle, Review, Title, User)
 
 
 def process_file(name: str):
