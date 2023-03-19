@@ -10,8 +10,8 @@ class TitleFilter(django_filters.FilterSet):
                                      lookup_expr='icontains')
     year = django_filters.NumberFilter(field_name='year')
 
-    # def filter_genre(self, queryset, name, value):
-    #     return queryset.filter(genre__slug=value)
+    def filter_genre(self, queryset, name, value):
+        return queryset.filter(genre__slug=value)
 
     class Meta:
         model = Title
