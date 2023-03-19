@@ -33,7 +33,7 @@ class Command(BaseCommand):
                                                       last_name=row[6])
         print('парсер пользователей прошел успешно')
 
-        # пасер категорий
+        # парсер категорий
         csv = process_file('category.csv')
         next(csv, None)
         for row in csv:
