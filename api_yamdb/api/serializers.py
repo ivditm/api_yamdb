@@ -110,12 +110,26 @@ class SignupSerializer(serializers.ModelSerializer):
 
 class ReviewSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
-        many=False,
         slug_field='username',
-        read_only=True
+        read_only=True,
+        default=serializers.CurrentUserDefault(),
     )
 
     class Meta:
         model = Review
         fields = ('text', 'author', 'score', 'pub_date')
         read_only_fields = ('author', 'title', 'pub_date')
+        validators = (
+            serializers.UniqueTogetherValidator(
+                queryset=Review.objects.all(),
+                fields=('author', 'title'),
+                message='Нельзя оставлять больше одного отзыва.'
+            ),
+        )
+
+    def validate_score(self, value):
+        if value < 1 or value > 10:
+            raise serializers.ValidationError(
+                'Значение должно быть в диапазоне от 1 до 10!'
+            )
+        return value

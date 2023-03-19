@@ -59,5 +59,5 @@ class ReviewViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(
             author=self.request.user,
-            title=self.__title_if_exist
+            title=self.__title_if_exist,
         )
