@@ -6,7 +6,7 @@ from rest_framework.response import Response
 
 from reviews.models import User, Category, Genre, Title
 
-from .permissions import IsAdminPermission, IsAuthorOrReadOnlyPermission
+from .permissions import IsAdminPermission, IsAuthorOrReadOnly
 from .serializers import (CategorySerializer,
                           GenreSerializer,
                           TitleSerializer,
@@ -44,7 +44,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
-    permission_classes = (IsAuthorOrReadOnlyPermission,)
+    permission_classes = (IsAuthorOrReadOnly,)
 
     @property
     def __title(self):
