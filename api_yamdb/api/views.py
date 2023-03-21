@@ -6,13 +6,13 @@ from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import AccessToken
 
 from uuid import uuid4
 
 from .filters import TitleFilter
-from .permissions import (AdminPermission, AdminOrReadOnly,
-                          AuthorOrReadOnlyPermission)
+from .permissions import (IsAdmin, IsAdminOrReadOnly,
+                          IsAuthorOrReadOnly)
 from reviews.models import Category, Genre, Title, User, Review
 from .serializers import (CategorySerializer, GenreSerializer,
                           TitleSerializer,
@@ -29,7 +29,7 @@ class GenreViewSet(CreateDestroyListViewSet):
     queryset = Genre.objects.all().order_by('name')
     serializer_class = GenreSerializer
     lookup_field = 'slug'
-    permission_classes = (AdminOrReadOnly,)
+    permission_classes = (IsAdminOrReadOnly,)
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     search_fields = ('name',)
 
@@ -38,7 +38,7 @@ class CategoryViewSet(CreateDestroyListViewSet):
     queryset = Category.objects.all().order_by('name')
     serializer_class = CategorySerializer
     lookup_field = 'slug'
-    permission_classes = (AdminOrReadOnly,)
+    permission_classes = (IsAdminOrReadOnly,)
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     search_fields = ('name',)
 
@@ -48,7 +48,7 @@ class TitleViewSet(viewsets.ModelViewSet):
                 .annotate(rating=Avg('reviews__score'))
                 .order_by('year'))
 
-    permission_classes = [AdminOrReadOnly]
+    permission_classes = [IsAdminOrReadOnly]
     serializer_class = TitleSerializer
     filterset_class = TitleFilter
     filter_backends = (DjangoFilterBackend,)
@@ -59,7 +59,7 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserForAdminSerializer
     http_method_names = ('get', 'post', 'patch', 'delete')
     lookup_field = ('username')
-    permission_classes = (AdminPermission,)
+    permission_classes = (IsAdmin,)
     filter_backends = (filters.SearchFilter,)
     search_fields = ('username',)
 
@@ -136,14 +136,14 @@ def get_token(request):
         User, username=username)
     if confirmation_code != user.confirmation_code:
         return Response(status=status.HTTP_400_BAD_REQUEST)
-    refresh = RefreshToken.for_user(user)
+    refresh = AccessToken.for_user(user)
     return Response({'token': str(refresh.access_token)},
                     status=status.HTTP_200_OK)
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
-    permission_classes = (AuthorOrReadOnlyPermission,)
+    permission_classes = (IsAuthorOrReadOnly,)
 
     @property
     def __title_if_exist(self):
@@ -164,7 +164,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
-    permission_classes = (AuthorOrReadOnlyPermission,)
+    permission_classes = (IsAuthorOrReadOnly,)
 
     @property
     def __review_if_exist(self):
