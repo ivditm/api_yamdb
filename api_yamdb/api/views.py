@@ -69,17 +69,17 @@ class CommentViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAuthorOrReadOnlyPermission,)
 
     @property
-    def __review_if_exist(self):
+    def __review(self):
         return get_object_or_404(
             Review,
             id=self.kwargs.get("review_id")
         )
 
     def get_queryset(self):
-        return self.__review_if_exist.comments.all()
+        return self.__review.comments.all()
 
     def perform_create(self, serializer):
         serializer.save(
             author=self.request.user,
-            review=self.__review_if_exist
+            review=self.__review
         )
