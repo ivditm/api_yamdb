@@ -4,8 +4,6 @@ from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
 from rest_framework.validators import UniqueTogetherValidator
 
-import datetime
-
 
 from reviews.models import Review, User, Genre, Category, Title, Comment
 
@@ -52,12 +50,9 @@ class TitleSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Title
-        fields = '__all__'
-
-    def validate_year(self, value):
-        if value > datetime.datetime.now().year:
-            raise serializers.ValidationError(ERROR_MESSAGE_TITLE)
-        return value
+        fields = ('name', 'category',
+                  'genre', 'description',
+                  'rating', 'id', 'year')
 
 
 class UserForAdminSerializer(serializers.ModelSerializer):

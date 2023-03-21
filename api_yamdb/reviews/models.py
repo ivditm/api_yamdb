@@ -11,6 +11,8 @@ ROLE_CHOICES = [
     ('moderator', 'moderator'),
     ('admin', 'admin'),
 ]
+MAX_LENGHT_256 = 256
+MAX_LENGHT_50 = 50
 
 
 class User(AbstractUser):
@@ -70,36 +72,51 @@ class User(AbstractUser):
 
 
 class Category(models.Model):
-    name = models.CharField(max_length=256,
+    name = models.CharField(max_length=MAX_LENGHT_256,
                             verbose_name='категория',
                             help_text='введите категорию')
     slug = models.SlugField(unique=True,
-                            max_length=50,
+                            max_length=MAX_LENGHT_50,
                             verbose_name='уникальный слаг',
                             help_text='придумайте слаг')
+
+    class Meta:
+        ordering = ['name']
+        verbose_name = 'Категория'
+        verbose_name_plural = 'категории'
 
     def __str__(self):
         return self.name
 
 
 class Genre(models.Model):
-    name = models.CharField(max_length=256,
+    name = models.CharField(max_length=MAX_LENGHT_256,
                             verbose_name='жанр',
                             help_text='введите жанр')
     slug = models.SlugField(unique=True,
-                            max_length=50,
+                            max_length=MAX_LENGHT_50,
                             verbose_name='уникальный слаг',
                             help_text='придумайте слаг')
+
+    class Meta:
+        ordering = ['name']
+        verbose_name = 'Жанр'
+        verbose_name_plural = 'Жанры'
 
     def __str__(self):
         return self.name
 
 
 class Title(models.Model):
-    name = models.CharField(max_length=256,
+    name = models.CharField(max_length=MAX_LENGHT_256,
+                            db_index=True,
                             verbose_name='наименование произведения',
                             help_text='введите название, произведения')
     year = models.PositiveSmallIntegerField(verbose_name='год выпуска',
+                                            validators=(MinValueValidator(0),
+                                                        MaxValueValidator(
+                                                        datetime.datetime
+                                                        .now().year)),
                                             help_text='введите год выпуска')
     description = models.TextField('описание произведения',
                                    help_text='добавьте описание')
@@ -119,7 +136,7 @@ class Title(models.Model):
                                             'относиться произведение'))
 
     class Meta:
-        ordering = ['year']
+        ordering = ['name']
         default_related_name = 'titles'
         verbose_name = 'Произведение'
         verbose_name_plural = 'Произведения'

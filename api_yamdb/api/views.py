@@ -25,29 +25,27 @@ DEFAULT_EMAIL_SUBJECT = 'Подтверждение регистрации по�
 DEFAULT_FROM_EMAIL = 'message@yamdb.com'
 
 
-class GenreViewSet(CreateDestroyListViewSet):
+class BaseViewSet(CreateDestroyListViewSet):
+    lookup_field = 'slug'
+    permission_classes = (IsAdminOrReadOnly,)
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
+    search_fields = ('name',)
+
+
+class GenreViewSet(BaseViewSet):
     queryset = Genre.objects.all().order_by('name')
     serializer_class = GenreSerializer
-    lookup_field = 'slug'
-    permission_classes = (IsAdminOrReadOnly,)
-    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
-    search_fields = ('name',)
 
 
-class CategoryViewSet(CreateDestroyListViewSet):
+class CategoryViewSet(BaseViewSet):
     queryset = Category.objects.all().order_by('name')
     serializer_class = CategorySerializer
-    lookup_field = 'slug'
-    permission_classes = (IsAdminOrReadOnly,)
-    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
-    search_fields = ('name',)
 
 
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = (Title.objects.all()
                 .annotate(rating=Avg('reviews__score'))
                 .order_by('year'))
-
     permission_classes = [IsAdminOrReadOnly]
     serializer_class = TitleSerializer
     filterset_class = TitleFilter
