@@ -47,17 +47,17 @@ class ReviewViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAuthorOrReadOnlyPermission,)
 
     @property
-    def __title_if_exist(self):
+    def __title(self):
         return get_object_or_404(
             Title,
             id=self.kwargs.get("title_id")
         )
 
     def get_queryset(self):
-        return self.__title_if_exist.reviews.all()
+        return self.__title.reviews.all()
 
     def perform_create(self, serializer):
         serializer.save(
             author=self.request.user,
-            title=self.__title_if_exist,
+            title=self.__title,
         )
