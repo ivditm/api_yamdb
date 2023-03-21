@@ -75,21 +75,6 @@ class UserForAdminSerializer(serializers.ModelSerializer):
             ),
         )
 
-    def validate_username(self, name):
-        if name == 'me':
-            raise serializers.ValidationError(
-                'Нельзя использовать me для имени пользователя'
-            )
-        elif name is None or name == '':
-            raise serializers.ValidationError(
-                'Требуется ввести имя пользователя'
-            )
-        elif not re.match(PATTERN_USER, name):
-            raise serializers.ValidationError(
-                'Имя пользователя не соответствует паттерну'
-            )
-        return name
-
     def validate_email(self, email):
         if email is None or email == '':
             raise serializers.ValidationError(
@@ -107,13 +92,6 @@ class UserForUserSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ('role',)
 
-    def validate_username(self, name):
-        if not re.match(PATTERN_USER, name):
-            raise serializers.ValidationError(
-                'Имя пользователя не соответствует паттерну'
-            )
-        return name
-
 
 class GetTokenSerializer(serializers.ModelSerializer):
     username = serializers.CharField(required=True)
@@ -122,17 +100,6 @@ class GetTokenSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('username', 'confirmation_code')
-
-    def validate_username(self, name):
-        if name.lower() == 'me':
-            raise serializers.ValidationError(
-                'Нельзя использовать me для имени пользователя'
-            )
-        elif name is None or name == '':
-            raise serializers.ValidationError(
-                'Требуется ввести имя пользователя'
-            )
-        return name
 
     def validate_email(self, email):
         if email is None or email == '':
@@ -143,40 +110,15 @@ class GetTokenSerializer(serializers.ModelSerializer):
 
 
 class SignupSerializer(serializers.ModelSerializer):
-    email = serializers.EmailField(validators=[])
-    username = serializers.CharField(validators=[])
-
+    
     class Meta:
         model = User
         fields = ('email', 'username')
-
-    def validate_username(self, name):
-        if name.lower() == 'me':
-            raise serializers.ValidationError(
-                'Нельзя использовать me для имени пользователя'
-            )
-        elif len(name) > 150:
-            raise serializers.ValidationError(
-                'Длина поля более 150 символов'
-            )
-        elif name is None or name == '':
-            raise serializers.ValidationError(
-                'Требуется ввести имя пользователя'
-            )
-        elif not re.match(PATTERN_USER, name):
-            raise serializers.ValidationError(
-                'Имя пользователя не соответствует паттерну'
-            )
-        return name
 
     def validate_email(self, email):
         if email is None or email == '':
             raise serializers.ValidationError(
                 'Требуется email пользователя'
-            )
-        elif len(email) > 254:
-            raise serializers.ValidationError(
-                'Длина поля email более 254 символов'
             )
         return email
 

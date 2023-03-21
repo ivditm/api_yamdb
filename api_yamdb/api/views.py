@@ -11,8 +11,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from uuid import uuid4
 
 from .filters import TitleFilter
-from .permissions import (IsAdminPermission, IsAdminOrReadOnly,
-                          IsAuthorOrReadOnlyPermission)
+from .permissions import (AdminPermission, AdminOrReadOnly,
+                          AuthorOrReadOnlyPermission)
 from reviews.models import Category, Genre, Title, User, Review
 from .serializers import (CategorySerializer, GenreSerializer,
                           TitleSerializer,
@@ -29,7 +29,7 @@ class GenreViewSet(CreateDestroyListViewSet):
     queryset = Genre.objects.all().order_by('name')
     serializer_class = GenreSerializer
     lookup_field = 'slug'
-    permission_classes = (IsAdminOrReadOnly,)
+    permission_classes = (AdminOrReadOnly,)
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     search_fields = ('name',)
 
@@ -38,7 +38,7 @@ class CategoryViewSet(CreateDestroyListViewSet):
     queryset = Category.objects.all().order_by('name')
     serializer_class = CategorySerializer
     lookup_field = 'slug'
-    permission_classes = (IsAdminOrReadOnly,)
+    permission_classes = (AdminOrReadOnly,)
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     search_fields = ('name',)
 
@@ -48,7 +48,7 @@ class TitleViewSet(viewsets.ModelViewSet):
                 .annotate(rating=Avg('reviews__score'))
                 .order_by('year'))
 
-    permission_classes = [IsAdminOrReadOnly]
+    permission_classes = [AdminOrReadOnly]
     serializer_class = TitleSerializer
     filterset_class = TitleFilter
     filter_backends = (DjangoFilterBackend,)
@@ -59,7 +59,7 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserForAdminSerializer
     http_method_names = ('get', 'post', 'patch', 'delete')
     lookup_field = ('username')
-    permission_classes = (IsAdminPermission,)
+    permission_classes = (AdminPermission,)
     filter_backends = (filters.SearchFilter,)
     search_fields = ('username',)
 
@@ -87,7 +87,6 @@ def sign_up(request):
     confirmation_code = str(uuid4)
     username = request.data.get('username')
     email = request.data.get('email')
-    user = User.objects.filter(username=username, email=email)
     if (
         User.objects.filter(username=username).exists()
         and User.objects.get(username=username).email == email
@@ -96,7 +95,7 @@ def sign_up(request):
             subject=DEFAULT_EMAIL_SUBJECT,
             message=confirmation_code,
             from_email=DEFAULT_FROM_EMAIL,
-            recipient_list=(user[0].email,)
+            recipient_list=(email,)
         )
         return Response(request.data, status=status.HTTP_200_OK)
     elif (
@@ -110,20 +109,19 @@ def sign_up(request):
     ):
         return Response(request.data, status=status.HTTP_400_BAD_REQUEST)
     serializer = SignupSerializer(data=request.data)
-    if serializer.is_valid(raise_exception=True):
-        email = serializer.validated_data['email']
-        username = serializer.validated_data['username']
-        user, _ = User.objects.get_or_create(
-            username=username, email=email,
-            confirmation_code=confirmation_code
-        )
-        send_mail(
-            subject=DEFAULT_EMAIL_SUBJECT,
-            message=confirmation_code,
-            from_email=DEFAULT_FROM_EMAIL,
-            recipient_list=(user.email,)
-        )
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    serializer.is_valid(raise_exception=True)
+    email = serializer.validated_data['email']
+    username = serializer.validated_data['username']
+    user, _ = User.objects.get_or_create(
+        username=username, email=email,
+        confirmation_code=confirmation_code
+    )
+    send_mail(
+        subject=DEFAULT_EMAIL_SUBJECT,
+        message=confirmation_code,
+        from_email=DEFAULT_FROM_EMAIL,
+        recipient_list=(user.email,)
+    )
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -145,7 +143,7 @@ def get_token(request):
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
-    permission_classes = (IsAuthorOrReadOnlyPermission,)
+    permission_classes = (AuthorOrReadOnlyPermission,)
 
     @property
     def __title_if_exist(self):
@@ -166,7 +164,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
-    permission_classes = (IsAuthorOrReadOnlyPermission,)
+    permission_classes = (AuthorOrReadOnlyPermission,)
 
     @property
     def __review_if_exist(self):

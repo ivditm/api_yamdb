@@ -1,36 +1,54 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 
-
+import re
 import datetime
 
-
+PATTERN_USER = r'^[\w.@+-]+\Z'
+USER = 'user'
+MODERATOR = 'moderator'
+ADMIN = 'admin'
+MAX_LENGTH_150 = 150
+MAX_LENGTH_254 = 254
+MAX_LENGTH_ROLE_CHOICE = 9
 ROLE_CHOICES = [
-    ('user', 'user'),
-    ('moderator', 'moderator'),
-    ('admin', 'admin'),
+    (USER, USER),
+    (MODERATOR, MODERATOR),
+    (ADMIN, ADMIN),
 ]
 
+def validate_username(value):
+        if value.lower() == 'me':
+            raise ValidationError(
+                'Нельзя использовать "me" для имени пользователя'
+            )
+        elif not re.match(PATTERN_USER, value):
+            raise ValidationError(
+                'Имя пользователя не соответствует паттерну'
+            )
+        return value
 
 class User(AbstractUser):
     username = models.CharField(
-        max_length=150,
+        max_length=MAX_LENGTH_150,
         unique=True,
-        help_text='Введите имя пользователя'
+        help_text='Введите имя пользователя',
+        validators=[validate_username]
     )
     email = models.EmailField(
-        max_length=254,
+        max_length=MAX_LENGTH_254,
         unique=True,
         help_text='Введите email'
     )
     first_name = models.CharField(
-        max_length=150,
+        max_length=MAX_LENGTH_150,
         help_text='Имя',
         blank=True
     )
     last_name = models.CharField(
-        max_length=150,
+        max_length=MAX_LENGTH_150,
         help_text='Фамилия',
         blank=True
     )
@@ -41,7 +59,7 @@ class User(AbstractUser):
     role = models.CharField(
         max_length=20,
         choices=ROLE_CHOICES,
-        default='user'
+        default=USER
     )
     confirmation_code = models.CharField(
         max_length=100,
@@ -49,13 +67,13 @@ class User(AbstractUser):
         null=True
     )
     password = models.CharField(
-        max_length=20,
+        max_length=MAX_LENGTH_ROLE_CHOICE,
         blank=True,
         null=True
     )
 
     class Meta:
-        ordering = ('id',)
+        ordering = ('username',)
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
         constraints = [

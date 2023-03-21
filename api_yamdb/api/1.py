@@ -1,0 +1,11 @@
+USER = 'user'
+MODERATOR = 'moderator'
+ADMIN = 'admin'
+ROLE_CHOICES = [
+    (USER, USER),
+    (MODERATOR, MODERATOR),
+    (ADMIN, ADMIN),
+]
+
+MAX_LENGTH_ROLE_CHOICE = len(ROLE_CHOICES)
+print(len(MODERATOR))
