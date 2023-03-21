@@ -26,7 +26,7 @@ DEFAULT_FROM_EMAIL = 'message@yamdb.com'
 
 
 class GenreViewSet(CreateDestroyListViewSet):
-    queryset = Genre.objects.all()
+    queryset = Genre.objects.all().order_by('name')
     serializer_class = GenreSerializer
     lookup_field = 'slug'
     permission_classes = (IsAdminOrReadOnly,)
@@ -35,7 +35,7 @@ class GenreViewSet(CreateDestroyListViewSet):
 
 
 class CategoryViewSet(CreateDestroyListViewSet):
-    queryset = Category.objects.all()
+    queryset = Category.objects.all().order_by('name')
     serializer_class = CategorySerializer
     lookup_field = 'slug'
     permission_classes = (IsAdminOrReadOnly,)
@@ -44,7 +44,9 @@ class CategoryViewSet(CreateDestroyListViewSet):
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.all().annotate(rating=Avg('reviews__score'))
+    queryset = (Title.objects.all()
+                .annotate(rating=Avg('reviews__score'))
+                .order_by('year'))
 
     permission_classes = [IsAdminOrReadOnly]
     serializer_class = TitleSerializer
