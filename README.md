@@ -22,6 +22,24 @@
 - git
 
 ### Описание запуска проекта:
+### Исполнители:
+
+Иван Дитятев https://github.com/ivditm
+
+Евгений Панкрушев https://github.com/NetWorm32
+
+Данила Мисиюк https://github.com/MisiyukDA
+
+### Пререквизиты:
+
+- macOS Monterey 12.3
+- Python 3.9
+- pip
+- csv
+- SQLite
+- git
+
+### Описание запуска проекта:
 
 Клонировать репозиторий и перейти в него в командной строке:
 
@@ -89,6 +107,7 @@ GET http://127.0.0.1:8000/api/v1/categories/
 
 ```
 POST http://127.0.0.1:8000/api/v1/categories/
+
 {
   "name": "string",
   "slug": "string"
@@ -105,6 +124,7 @@ GET http://127.0.0.1:8000/api/v1/genres/
 
 ```
 POST http://127.0.0.1:8000/api/v1/genres/
+
 {
   "name": "string",
   "slug": "string"
@@ -121,6 +141,7 @@ GET http://127.0.0.1:8000/api/v1/titles/
 
 ```
 POST http://127.0.0.1:8000/api/v1/titles/
+
 {
 "name": "string",
 "year": 0,
@@ -148,6 +169,7 @@ GET http://127.0.0.1:8000/api/v1/titles/{title_id}/reviews/
 
 ```
 POST http://127.0.0.1:8000/api/v1/titles/{title_id}/reviews/
+
 {
   "text": "string",
   "score": 1
@@ -170,6 +192,7 @@ GET http://127.0.0.1:8000/api/v1/titles/{title_id}/reviews/{review_id}/comments/
 
 ```
 POST http://127.0.0.1:8000/api/v1/titles/{title_id}/reviews/{review_id}/comments/
+
 {
   "text": "string"
 }
@@ -191,6 +214,7 @@ GET http://127.0.0.1:8000/api/v1/users/me/
 
 ```
 PATCH http://127.0.0.1:8000/api/v1/users/me/
+
 {
   "username": "string",
   "email": "user@example.com",
