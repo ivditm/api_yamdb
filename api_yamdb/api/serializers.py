@@ -120,7 +120,7 @@ class ReviewSerializer(serializers.ModelSerializer):
         model = Review
         fields = ('id', 'text', 'author', 'score', 'pub_date')
         read_only_fields = ('author', 'title', 'pub_date')
-    
+
     def validate(self, data):
         title_id = self.context['view'].kwargs.get('title_id')
         author = self.context.get('request').user
