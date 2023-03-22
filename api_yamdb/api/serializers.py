@@ -131,10 +131,3 @@ class ReviewSerializer(serializers.ModelSerializer):
                 'Нельзя оставлять больше одного отзыва!'
             )
         return data
-
-    def validate_score(self, value):
-        if value < 1 or value > 10:
-            raise serializers.ValidationError(
-                'Значение должно быть в диапазоне от 1 до 10!'
-            )
-        return value
