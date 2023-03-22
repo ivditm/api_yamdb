@@ -4,6 +4,7 @@ from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
@@ -85,44 +86,22 @@ class UserViewSet(viewsets.ModelViewSet):
 @permission_classes((AllowAny,))
 def sign_up(request):
     confirmation_code = str(uuid4)
-    username = request.data.get('username')
     email = request.data.get('email')
-    if (
-        User.objects.filter(username=username).exists()
-        and User.objects.get(username=username).email == email
-    ):
-        send_mail(
+    username = request.data.get('username')
+    serializer = UserForUserSerializer(data=request.data)
+    if User.objects.filter(username=username, email=email):
+        user = User.objects.get(username=username)
+        serializer = UserForUserSerializer(user, data=request.data)
+    serializer.is_valid(raise_exception=True)
+    serializer.save()
+    user = User.objects.get(username=username)
+    send_mail(
             subject=DEFAULT_EMAIL_SUBJECT,
             message=confirmation_code,
             from_email=DEFAULT_FROM_EMAIL,
-            recipient_list=(email,)
+            recipient_list=(user.email,)
         )
-        return Response(request.data, status=status.HTTP_200_OK)
-    elif (
-        User.objects.filter(username=username).exists()
-        and User.objects.get(username=username).email != email
-    ):
-        return Response(request.data, status=status.HTTP_400_BAD_REQUEST)
-    elif (
-        User.objects.filter(email=email).exists()
-        and User.objects.get(email=email).username != username
-    ):
-        return Response(request.data, status=status.HTTP_400_BAD_REQUEST)
-    serializer = SignupSerializer(data=request.data)
-    serializer.is_valid(raise_exception=True)
-    email = serializer.validated_data['email']
-    username = serializer.validated_data['username']
-    user, _ = User.objects.get_or_create(
-        username=username, email=email,
-        confirmation_code=confirmation_code
-    )
-    send_mail(
-        subject=DEFAULT_EMAIL_SUBJECT,
-        message=confirmation_code,
-        from_email=DEFAULT_FROM_EMAIL,
-        recipient_list=(user.email,)
-    )
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    return Response(request.data, status=status.HTTP_200_OK)    
 
 
 @api_view(["POST"])

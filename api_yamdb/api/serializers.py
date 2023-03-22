@@ -75,13 +75,6 @@ class UserForAdminSerializer(serializers.ModelSerializer):
             ),
         )
 
-    def validate_email(self, email):
-        if email is None or email == '':
-            raise serializers.ValidationError(
-                'Требуется email пользователя'
-            )
-        return email
-
 
 class UserForUserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -101,26 +94,12 @@ class GetTokenSerializer(serializers.ModelSerializer):
         model = User
         fields = ('username', 'confirmation_code')
 
-    def validate_email(self, email):
-        if email is None or email == '':
-            raise serializers.ValidationError(
-                'Требуется email пользователя'
-            )
-        return email
-
 
 class SignupSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = User
         fields = ('email', 'username')
-
-    def validate_email(self, email):
-        if email is None or email == '':
-            raise serializers.ValidationError(
-                'Требуется email пользователя'
-            )
-        return email
 
 
 class ReviewSerializer(serializers.ModelSerializer):

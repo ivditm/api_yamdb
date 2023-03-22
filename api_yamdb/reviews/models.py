@@ -10,9 +10,11 @@ PATTERN_USER = r'^[\w.@+-]+\Z'
 USER = 'user'
 MODERATOR = 'moderator'
 ADMIN = 'admin'
-MAX_LENGTH_150 = 150
-MAX_LENGTH_254 = 254
-MAX_LENGTH_ROLE_CHOICE = 9
+USERNAME_MAX_LENGTH = 150
+EMAIL_MAX_LENGTH = 254
+FIRST_NAME_MAX_LENGTH = 150
+LAST_NAME_MAX_LENGTH = 150
+ROLE_CHOICE_MAX_LENGTH = 9
 ROLE_CHOICES = [
     (USER, USER),
     (MODERATOR, MODERATOR),
@@ -20,7 +22,7 @@ ROLE_CHOICES = [
 ]
 
 def validate_username(value):
-        if value.lower() == 'me':
+        if value == 'me':
             raise ValidationError(
                 'Нельзя использовать "me" для имени пользователя'
             )
@@ -32,23 +34,23 @@ def validate_username(value):
 
 class User(AbstractUser):
     username = models.CharField(
-        max_length=MAX_LENGTH_150,
+        max_length=USERNAME_MAX_LENGTH,
         unique=True,
         help_text='Введите имя пользователя',
         validators=[validate_username]
     )
     email = models.EmailField(
-        max_length=MAX_LENGTH_254,
+        max_length=EMAIL_MAX_LENGTH,
         unique=True,
         help_text='Введите email'
     )
     first_name = models.CharField(
-        max_length=MAX_LENGTH_150,
+        max_length=FIRST_NAME_MAX_LENGTH,
         help_text='Имя',
         blank=True
     )
     last_name = models.CharField(
-        max_length=MAX_LENGTH_150,
+        max_length=LAST_NAME_MAX_LENGTH,
         help_text='Фамилия',
         blank=True
     )
@@ -57,7 +59,7 @@ class User(AbstractUser):
         blank=True
     )
     role = models.CharField(
-        max_length=20,
+        max_length=ROLE_CHOICE_MAX_LENGTH,
         choices=ROLE_CHOICES,
         default=USER
     )
@@ -67,7 +69,7 @@ class User(AbstractUser):
         null=True
     )
     password = models.CharField(
-        max_length=MAX_LENGTH_ROLE_CHOICE,
+        max_length=20,
         blank=True,
         null=True
     )
