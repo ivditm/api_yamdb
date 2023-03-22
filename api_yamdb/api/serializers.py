@@ -82,6 +82,12 @@ class UserForUserSerializer(serializers.ModelSerializer):
             'last_name', 'bio', 'role',
         )
         read_only_fields = ('role',)
+        validators = (
+            UniqueTogetherValidator(
+                queryset=User.objects.all(),
+                fields=('username', 'email')
+            ),
+        )
 
 
 class GetTokenSerializer(serializers.ModelSerializer):
