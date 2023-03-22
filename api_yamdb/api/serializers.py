@@ -2,6 +2,7 @@ import re
 from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
 from rest_framework.validators import UniqueTogetherValidator
+from django.shortcuts import get_object_or_404
 
 import datetime
 
@@ -117,15 +118,19 @@ class ReviewSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Review
-        fields = ('text', 'author', 'score', 'pub_date')
+        fields = ('id', 'text', 'author', 'score', 'pub_date')
         read_only_fields = ('author', 'title', 'pub_date')
-        validators = (
-            serializers.UniqueTogetherValidator(
-                queryset=Review.objects.all(),
-                fields=('author', 'title'),
-                message='Нельзя оставлять больше одного отзыва.'
-            ),
-        )
+    
+    def validate(self, data):
+        title_id = self.context['view'].kwargs.get('title_id')
+        author = self.context.get('request').user
+        title = get_object_or_404(Title, id=title_id)
+        if (title.reviews.filter(author=author).exists()
+           and self.context.get('request').method != 'PATCH'):
+            raise serializers.ValidationError(
+                'Нельзя оставлять больше одного отзыва!'
+            )
+        return data
 
     def validate_score(self, value):
         if value < 1 or value > 10:
