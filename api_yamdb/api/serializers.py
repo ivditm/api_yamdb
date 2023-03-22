@@ -6,10 +6,8 @@ from rest_framework.validators import UniqueTogetherValidator
 
 import datetime
 
-
 from reviews.models import Review, User, Genre, Category, Title, Comment
 
-PATTERN_USER = r'^[\w.@+-]+\Z'
 ERROR_MESSAGE_TITLE = 'год выпуска книги не может быть больше текущего'
 
 
