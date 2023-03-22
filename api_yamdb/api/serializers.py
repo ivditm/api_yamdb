@@ -1,16 +1,10 @@
-from django.shortcuts import get_object_or_404
-import re
 from rest_framework import serializers
-from rest_framework.relations import SlugRelatedField
 from rest_framework.validators import UniqueTogetherValidator
 
-import datetime
 
-
-from reviews.models import Review, User, Genre, Category, Title, Comment
+from reviews.models import Category, Comment, Genre, Review, Title, User
 
 PATTERN_USER = r'^[\w.@+-]+\Z'
-ERROR_MESSAGE_TITLE = 'год выпуска книги не может быть больше текущего'
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -52,12 +46,9 @@ class TitleSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Title
-        fields = '__all__'
-
-    def validate_year(self, value):
-        if value > datetime.datetime.now().year:
-            raise serializers.ValidationError(ERROR_MESSAGE_TITLE)
-        return value
+        fields = ('name', 'category',
+                  'genre', 'description',
+                  'rating', 'id', 'year')
 
 
 class UserForAdminSerializer(serializers.ModelSerializer):
@@ -74,21 +65,6 @@ class UserForAdminSerializer(serializers.ModelSerializer):
                 fields=('username', 'email')
             ),
         )
-
-    def validate_username(self, name):
-        if name == 'me':
-            raise serializers.ValidationError(
-                'Нельзя использовать me для имени пользователя'
-            )
-        elif name is None or name == '':
-            raise serializers.ValidationError(
-                'Требуется ввести имя пользователя'
-            )
-        elif not re.match(PATTERN_USER, name):
-            raise serializers.ValidationError(
-                'Имя пользователя не соответствует паттерну'
-            )
-        return name
 
     def validate_email(self, email):
         if email is None or email == '':
@@ -107,13 +83,6 @@ class UserForUserSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ('role',)
 
-    def validate_username(self, name):
-        if not re.match(PATTERN_USER, name):
-            raise serializers.ValidationError(
-                'Имя пользователя не соответствует паттерну'
-            )
-        return name
-
 
 class GetTokenSerializer(serializers.ModelSerializer):
     username = serializers.CharField(required=True)
@@ -122,17 +91,6 @@ class GetTokenSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('username', 'confirmation_code')
-
-    def validate_username(self, name):
-        if name.lower() == 'me':
-            raise serializers.ValidationError(
-                'Нельзя использовать me для имени пользователя'
-            )
-        elif name is None or name == '':
-            raise serializers.ValidationError(
-                'Требуется ввести имя пользователя'
-            )
-        return name
 
     def validate_email(self, email):
         if email is None or email == '':
@@ -143,66 +101,43 @@ class GetTokenSerializer(serializers.ModelSerializer):
 
 
 class SignupSerializer(serializers.ModelSerializer):
-    email = serializers.EmailField(validators=[])
-    username = serializers.CharField(validators=[])
 
     class Meta:
         model = User
         fields = ('email', 'username')
-
-    def validate_username(self, name):
-        if name.lower() == 'me':
-            raise serializers.ValidationError(
-                'Нельзя использовать me для имени пользователя'
-            )
-        elif len(name) > 150:
-            raise serializers.ValidationError(
-                'Длина поля более 150 символов'
-            )
-        elif name is None or name == '':
-            raise serializers.ValidationError(
-                'Требуется ввести имя пользователя'
-            )
-        elif not re.match(PATTERN_USER, name):
-            raise serializers.ValidationError(
-                'Имя пользователя не соответствует паттерну'
-            )
-        return name
 
     def validate_email(self, email):
         if email is None or email == '':
             raise serializers.ValidationError(
                 'Требуется email пользователя'
             )
-        elif len(email) > 254:
-            raise serializers.ValidationError(
-                'Длина поля email более 254 символов'
-            )
         return email
 
 
 class ReviewSerializer(serializers.ModelSerializer):
-    author = SlugRelatedField(slug_field='username', read_only=True)
+    author = serializers.SlugRelatedField(
+        slug_field='username',
+        read_only=True,
+        default=serializers.CurrentUserDefault(),
+    )
 
     class Meta:
-        fields = '__all__'
         model = Review
-        read_only_fields = ('title',)
-
-    def validate(self, data):
-        title_id = self.context['view'].kwargs.get('title_id')
-        author = self.context.get('request').user
-        title = get_object_or_404(Title, id=title_id)
-        if (title.reviews.filter(author=author).exists()
-           and self.context.get('request').method != 'PATCH'):
-            raise serializers.ValidationError(
-                'Можно оставлять только один отзыв!'
-            )
-        return data
+        fields = ('text', 'author', 'score', 'pub_date')
+        read_only_fields = ('author', 'title', 'pub_date')
+        validators = (
+            serializers.UniqueTogetherValidator(
+                queryset=Review.objects.all(),
+                fields=('author', 'title'),
+                message='Нельзя оставлять больше одного отзыва.'
+            ),
+        )
 
     def validate_score(self, value):
         if value < 1 or value > 10:
-            raise serializers.ValidationError('Недопустимое значение!')
+            raise serializers.ValidationError(
+                'Значение должно быть в диапазоне от 1 до 10!'
+            )
         return value
 
 
