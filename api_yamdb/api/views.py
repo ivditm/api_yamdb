@@ -18,38 +18,31 @@ from .serializers import (CategorySerializer, GenreSerializer,
                           TitleSerializer,
                           UserForAdminSerializer, UserForUserSerializer,
                           ReviewSerializer, CommentSerializer,
-                          GetTokenSerializer, SignupSerializer)
-from .mixins import CreateDestroyListViewSet
+                          GetTokenSerializer)
+from .mixins import CategoryGenreViewSet
 
 DEFAULT_EMAIL_SUBJECT = 'Подтверждение регистрации пользователя'
 DEFAULT_FROM_EMAIL = 'message@yamdb.com'
 
 
-class BaseViewSet(CreateDestroyListViewSet):
-    lookup_field = 'slug'
-    permission_classes = (IsAdminOrReadOnly,)
-    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
-    search_fields = ('name',)
-
-
-class GenreViewSet(BaseViewSet):
-    queryset = Genre.objects.all().order_by('name')
+class GenreViewSet(CategoryGenreViewSet):
+    queryset = Genre.objects.all()
     serializer_class = GenreSerializer
 
 
-class CategoryViewSet(BaseViewSet):
-    queryset = Category.objects.all().order_by('name')
+class CategoryViewSet(CategoryGenreViewSet):
+    queryset = Category.objects.all()
     serializer_class = CategorySerializer
 
 
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = (Title.objects.all()
-                .annotate(rating=Avg('reviews__score'))
-                .order_by('year'))
+                .annotate(rating=Avg('reviews__score')))
     permission_classes = [IsAdminOrReadOnly]
     serializer_class = TitleSerializer
     filterset_class = TitleFilter
     filter_backends = (DjangoFilterBackend,)
+    ordering_fields = ['name']
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -83,44 +76,20 @@ class UserViewSet(viewsets.ModelViewSet):
 @permission_classes((AllowAny,))
 def sign_up(request):
     confirmation_code = str(uuid4)
-    username = request.data.get('username')
     email = request.data.get('email')
-    if (
-        User.objects.filter(username=username).exists()
-        and User.objects.get(username=username).email == email
-    ):
-        send_mail(
-            subject=DEFAULT_EMAIL_SUBJECT,
-            message=confirmation_code,
-            from_email=DEFAULT_FROM_EMAIL,
-            recipient_list=(email,)
-        )
-        return Response(request.data, status=status.HTTP_200_OK)
-    elif (
-        User.objects.filter(username=username).exists()
-        and User.objects.get(username=username).email != email
-    ):
-        return Response(request.data, status=status.HTTP_400_BAD_REQUEST)
-    elif (
-        User.objects.filter(email=email).exists()
-        and User.objects.get(email=email).username != username
-    ):
-        return Response(request.data, status=status.HTTP_400_BAD_REQUEST)
-    serializer = SignupSerializer(data=request.data)
+    username = request.data.get('username')
+    serializer = UserForUserSerializer(data=request.data)
+    if User.objects.filter(username=username, email=email):
+        user = User.objects.get(username=username)
+        serializer = UserForUserSerializer(user, data=request.data)
     serializer.is_valid(raise_exception=True)
-    email = serializer.validated_data['email']
-    username = serializer.validated_data['username']
-    user, _ = User.objects.get_or_create(
-        username=username, email=email,
-        confirmation_code=confirmation_code
-    )
-    send_mail(
-        subject=DEFAULT_EMAIL_SUBJECT,
-        message=confirmation_code,
-        from_email=DEFAULT_FROM_EMAIL,
-        recipient_list=(user.email,)
-    )
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    serializer.save()
+    user = User.objects.get(username=username)
+    send_mail(subject=DEFAULT_EMAIL_SUBJECT,
+              message=confirmation_code,
+              from_email=DEFAULT_FROM_EMAIL,
+              recipient_list=(user.email,))
+    return Response(request.data, status=status.HTTP_200_OK)
 
 
 @api_view(["POST"])

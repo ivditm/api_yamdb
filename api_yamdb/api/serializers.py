@@ -3,7 +3,8 @@ from rest_framework.validators import UniqueTogetherValidator
 from django.shortcuts import get_object_or_404
 
 
-from reviews.models import Category, Comment, Genre, Review, Title, User
+from reviews.models import (Category, Comment, Genre,
+                            Review, Title, User, validate_year)
 
 PATTERN_USER = r'^[\w.@+-]+\Z'
 
@@ -51,6 +52,10 @@ class TitleSerializer(serializers.ModelSerializer):
                   'genre', 'description',
                   'rating', 'id', 'year')
 
+    def validate_year(self, year):
+        validate_year(year)
+        return year
+
 
 class UserForAdminSerializer(serializers.ModelSerializer):
     """Сериализатор для User"""
@@ -67,13 +72,6 @@ class UserForAdminSerializer(serializers.ModelSerializer):
             ),
         )
 
-    def validate_email(self, email):
-        if email is None or email == '':
-            raise serializers.ValidationError(
-                'Требуется email пользователя'
-            )
-        return email
-
 
 class UserForUserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -83,6 +81,12 @@ class UserForUserSerializer(serializers.ModelSerializer):
             'last_name', 'bio', 'role',
         )
         read_only_fields = ('role',)
+        validators = (
+            UniqueTogetherValidator(
+                queryset=User.objects.all(),
+                fields=('username', 'email')
+            ),
+        )
 
 
 class GetTokenSerializer(serializers.ModelSerializer):
@@ -93,26 +97,12 @@ class GetTokenSerializer(serializers.ModelSerializer):
         model = User
         fields = ('username', 'confirmation_code')
 
-    def validate_email(self, email):
-        if email is None or email == '':
-            raise serializers.ValidationError(
-                'Требуется email пользователя'
-            )
-        return email
-
 
 class SignupSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
         fields = ('email', 'username')
-
-    def validate_email(self, email):
-        if email is None or email == '':
-            raise serializers.ValidationError(
-                'Требуется email пользователя'
-            )
-        return email
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -137,13 +127,6 @@ class ReviewSerializer(serializers.ModelSerializer):
                 'Нельзя оставлять больше одного отзыва!'
             )
         return data
-
-    def validate_score(self, value):
-        if value < 1 or value > 10:
-            raise serializers.ValidationError(
-                'Значение должно быть в диапазоне от 1 до 10!'
-            )
-        return value
 
 
 class CommentSerializer(serializers.ModelSerializer):

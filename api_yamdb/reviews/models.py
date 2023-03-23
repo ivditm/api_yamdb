@@ -10,20 +10,24 @@ PATTERN_USER = r'^[\w.@+-]+\Z'
 USER = 'user'
 MODERATOR = 'moderator'
 ADMIN = 'admin'
-MAX_LENGTH_150 = 150
-MAX_LENGTH_254 = 254
-MAX_LENGTH_ROLE_CHOICE = 9
-MAX_LENGHT_256 = 256
-MAX_LENGHT_50 = 50
+USERNAME_MAX_LENGTH = 150
+EMAIL_MAX_LENGTH = 254
+FIRST_NAME_MAX_LENGTH = 150
+LAST_NAME_MAX_LENGTH = 150
+ROLE_CHOICE_MAX_LENGTH = 9
+NAME_MAX_LENGHT = 256
+SLUG_MAX_LENGHT = 50
 ROLE_CHOICES = [
     (USER, USER),
     (MODERATOR, MODERATOR),
     (ADMIN, ADMIN),
 ]
+YEAR_VALIDATION_ERROR_MESSAGE = ('Книга не может быть из будущего или '
+                                 'выпущена динозаврами')
 
 
 def validate_username(value):
-    if value.lower() == 'me':
+    if value == 'me':
         raise ValidationError(
             'Нельзя использовать "me" для имени пользователя'
         )
@@ -34,25 +38,32 @@ def validate_username(value):
     return value
 
 
+def validate_year(value):
+    if 0 < value <= datetime.datetime.now().year:
+        return value
+    else:
+        raise ValidationError(YEAR_VALIDATION_ERROR_MESSAGE)
+
+
 class User(AbstractUser):
     username = models.CharField(
-        max_length=MAX_LENGTH_150,
+        max_length=USERNAME_MAX_LENGTH,
         unique=True,
         help_text='Введите имя пользователя',
         validators=[validate_username]
     )
     email = models.EmailField(
-        max_length=MAX_LENGTH_254,
+        max_length=EMAIL_MAX_LENGTH,
         unique=True,
         help_text='Введите email'
     )
     first_name = models.CharField(
-        max_length=MAX_LENGTH_150,
+        max_length=FIRST_NAME_MAX_LENGTH,
         help_text='Имя',
         blank=True
     )
     last_name = models.CharField(
-        max_length=MAX_LENGTH_150,
+        max_length=LAST_NAME_MAX_LENGTH,
         help_text='Фамилия',
         blank=True
     )
@@ -61,7 +72,7 @@ class User(AbstractUser):
         blank=True
     )
     role = models.CharField(
-        max_length=20,
+        max_length=ROLE_CHOICE_MAX_LENGTH,
         choices=ROLE_CHOICES,
         default=USER
     )
@@ -71,7 +82,7 @@ class User(AbstractUser):
         null=True
     )
     password = models.CharField(
-        max_length=MAX_LENGTH_ROLE_CHOICE,
+        max_length=20,
         blank=True,
         null=True
     )
@@ -92,11 +103,11 @@ class User(AbstractUser):
 
 
 class Category(models.Model):
-    name = models.CharField(max_length=MAX_LENGHT_256,
+    name = models.CharField(max_length=NAME_MAX_LENGHT,
                             verbose_name='категория',
                             help_text='введите категорию')
     slug = models.SlugField(unique=True,
-                            max_length=MAX_LENGHT_50,
+                            max_length=SLUG_MAX_LENGHT,
                             verbose_name='уникальный слаг',
                             help_text='придумайте слаг')
 
@@ -110,11 +121,11 @@ class Category(models.Model):
 
 
 class Genre(models.Model):
-    name = models.CharField(max_length=MAX_LENGHT_256,
+    name = models.CharField(max_length=NAME_MAX_LENGHT,
                             verbose_name='жанр',
                             help_text='введите жанр')
     slug = models.SlugField(unique=True,
-                            max_length=MAX_LENGHT_50,
+                            max_length=SLUG_MAX_LENGHT,
                             verbose_name='уникальный слаг',
                             help_text='придумайте слаг')
 
@@ -128,15 +139,12 @@ class Genre(models.Model):
 
 
 class Title(models.Model):
-    name = models.CharField(max_length=MAX_LENGHT_256,
+    name = models.CharField(max_length=NAME_MAX_LENGHT,
                             db_index=True,
                             verbose_name='наименование произведения',
                             help_text='введите название, произведения')
     year = models.PositiveSmallIntegerField(verbose_name='год выпуска',
-                                            validators=(MinValueValidator(0),
-                                                        MaxValueValidator(
-                                                        datetime.datetime
-                                                        .now().year)),
+                                            validators=(validate_year,),
                                             help_text='введите год выпуска')
     description = models.TextField('описание произведения',
                                    help_text='добавьте описание')
