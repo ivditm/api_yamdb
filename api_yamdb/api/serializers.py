@@ -4,7 +4,8 @@ from django.shortcuts import get_object_or_404
 
 
 from reviews.models import (Category, Comment, Genre,
-                            Review, Title, User, validate_year)
+                            Review, Title, User)
+from reviews.validators import validate_year
 
 PATTERN_USER = r'^[\w.@+-]+\Z'
 
@@ -53,8 +54,7 @@ class TitleSerializer(serializers.ModelSerializer):
                   'rating', 'id', 'year')
 
     def validate_year(self, year):
-        validate_year(year)
-        return year
+        return validate_year(year)
 
 
 class UserForAdminSerializer(serializers.ModelSerializer):

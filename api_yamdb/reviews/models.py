@@ -1,12 +1,14 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 
-import re
+
 import datetime
 
-PATTERN_USER = r'^[\w.@+-]+\Z'
+
+from .validators import validate_username, validate_year
+
+
 USER = 'user'
 MODERATOR = 'moderator'
 ADMIN = 'admin'
@@ -22,27 +24,6 @@ ROLE_CHOICES = [
     (MODERATOR, MODERATOR),
     (ADMIN, ADMIN),
 ]
-YEAR_VALIDATION_ERROR_MESSAGE = ('Книга не может быть из будущего или '
-                                 'выпущена динозаврами')
-
-
-def validate_username(value):
-    if value == 'me':
-        raise ValidationError(
-            'Нельзя использовать "me" для имени пользователя'
-        )
-    elif not re.match(PATTERN_USER, value):
-        raise ValidationError(
-            'Имя пользователя не соответствует паттерну'
-        )
-    return value
-
-
-def validate_year(value):
-    if 0 < value <= datetime.datetime.now().year:
-        return value
-    else:
-        raise ValidationError(YEAR_VALIDATION_ERROR_MESSAGE)
 
 
 class User(AbstractUser):
@@ -228,6 +209,8 @@ class Review(models.Model):
                 fields=["author", "title"], name="unique_review"
             )
         ]
+        verbose_name = 'отзыв'
+        verbose_name_plural = 'отзывы'
 
     def __str__(self):
         return self.text[:15]
@@ -252,3 +235,5 @@ class Comment(models.Model):
     class Meta:
         ordering = ['pub_date']
         default_related_name = 'comments'
+        verbose_name = 'комментарий'
+        verbose_name_plural = 'коментарии'
