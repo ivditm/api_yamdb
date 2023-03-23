@@ -86,7 +86,7 @@ python3 manage.py runserver
 Импорт БД из csv:
 
 ```
-python3 api_yamdb/managment/commands.py
+python3 manage.py import_csv
 ```
 
 ### Тестирование:
